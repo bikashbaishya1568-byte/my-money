@@ -89,7 +89,7 @@ input,select{width:100%;padding:12px 13px;border:1px solid var(--border);border-
 <div class="row"><div><label>Category</label><select id="category"></select></div><div><label>Date</label><input id="date" type="date" required></div></div>
 <label>Note</label><input id="note" placeholder="e.g. Lunch, salary, recharge">
 <label>Payment Method</label><select id="method"><option>UPI</option><option>Cash</option><option>Bank</option><option>Card</option><option>Other</option></select>
-<div class="row" style="margin-top:16px"><button type="button" class="btn secondary" onclick="closeForm()">Cancel</button><button class="btn add" type="submit">Save</button></div>
+<div class="row" style="margin-top:16px"><button type="button" class="btn secondary" onclick="closeForm()">Cancel</button><button id="deleteEditBtn" type="button" class="btn" style="background:#fff;color:#dc2626;border:1px solid #fecaca;display:none" onclick="deleteEditingTx()">🗑️ Delete</button><button class="btn add" type="submit">Save</button></div>
 </form></div></div>
 
 <script>
@@ -161,10 +161,11 @@ function lockHub(){
 }
 function switchTracker(k){tracker=k;filter="All";document.querySelectorAll(".switch button").forEach(b=>b.classList.remove("active"));$("tab"+(k==="my"?"My":k==="college"?"College":"Private")).classList.add("active");document.querySelectorAll(".filters button").forEach((b,i)=>b.classList.toggle("active",i===0));render()}
 function updateCategories(){let arr=$("type").value==="Income"?cfg().income:cfg().expense;$("category").innerHTML=arr.map(c=>`<option>${c}</option>`).join("")}
-function openForm(type,id=null){editingId=id;$("type").value=type;updateCategories();if(id!==null){let x=current().txs.find(t=>t.id===id);$("formTitle").textContent="Edit Transaction";$("amount").value=x.amount;$("category").value=x.category;$("date").value=x.date;$("note").value=x.note;$("method").value=x.method}else{$("formTitle").textContent="Add "+type;$("amount").value="";$("note").value="";$("date").value=new Date().toISOString().slice(0,10);$("method").value="UPI"}$("modal").classList.add("show")}
-function closeForm(){$("modal").classList.remove("show");editingId=null}
+function openForm(type,id=null){editingId=id;$("type").value=type;updateCategories();if(id!==null){let x=current().txs.find(t=>t.id===id);$("formTitle").textContent="Edit Transaction";$("amount").value=x.amount;$("category").value=x.category;$("date").value=x.date;$("note").value=x.note;$("method").value=x.method;$("deleteEditBtn").style.display="block"}else{$("formTitle").textContent="Add "+type;$("amount").value="";$("note").value="";$("date").value=new Date().toISOString().slice(0,10);$("method").value="UPI";$("deleteEditBtn").style.display="none"}$("modal").classList.add("show")}
+function closeForm(){$("modal").classList.remove("show");editingId=null;$("deleteEditBtn").style.display="none"}
 function saveTx(e){e.preventDefault();let x={id:editingId??Date.now(),type:$("type").value,amount:+$("amount").value,category:$("category").value,date:$("date").value,note:$("note").value.trim()||$("category").value,method:$("method").value};if(editingId!==null){let i=current().txs.findIndex(t=>t.id===editingId);if(i>=0)current().txs[i]=x}else current().txs.unshift(x);persist();closeForm();render()}
 function deleteTx(id){let x=current().txs.find(t=>t.id===id);if(x&&confirm(`Delete ${x.note} — ${money(x.amount)}?`)){current().txs=current().txs.filter(t=>t.id!==id);persist();render()}}
+function deleteEditingTx(){if(editingId===null)return;let x=current().txs.find(t=>t.id===editingId);if(!x)return;if(confirm(`Delete this transaction?\n\n${x.note} — ${money(x.amount)}\n${x.date}`)){current().txs=current().txs.filter(t=>t.id!==editingId);persist();closeForm();render()}}
 function setFilter(f,el){filter=f;document.querySelectorAll(".filters button").forEach(b=>b.classList.remove("active"));el.classList.add("active");renderTransactions()}
 function monthKey(d){return String(d).slice(0,7)} function currentMonth(){return new Date().toISOString().slice(0,7)}
 function fmtMonth(k){let [y,m]=k.split("-");return new Date(+y,+m-1,1).toLocaleDateString("en-IN",{month:"long",year:"numeric"})}
